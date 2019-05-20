@@ -4352,10 +4352,10 @@ static int fg_restore_soc(struct fg_chip *chip)
 	int rc;
 	u16 msoc;
 
-	if (chip->use_last_soc && chip->last_soc)
-		msoc = DIV_ROUND_CLOSEST(chip->last_soc * 0xFFFF,
+	msoc = DIV_ROUND_CLOSEST(msoc * FULL_CAPACITY,
 				FULL_SOC_RAW);
-	else
+	if (msoc >= FULL_CAPACITY)
+		msoc = FULL_CAPACITY;
 		return 0;
 
 	if (fg_debug_mask & FG_STATUS)
