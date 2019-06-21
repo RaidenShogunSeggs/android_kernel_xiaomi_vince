@@ -32,5 +32,6 @@ obj-$(CONFIG_CPU_FREQ_GOV_WALT) += cpufreq_walt.o
 obj-$(CONFIG_CPU_FREQ_GOV_HELIX_SCHEDUTIL) += cpufreq_helix_schedutil.o
 obj-$(CONFIG_CPU_FREQ_GOV_ENERGY_DCFC) += cpufreq_energy_dcfc.o
 obj-$(CONFIG_CPU_FREQ_GOV_PIXUTIL) += cpufreq_pixutil.o
+obj-$(CONFIG_CPU_FREQ_GOV_LIGHTNINGUTIL) += cpufreq_lightningutil.o
 obj-$(CONFIG_SCHED_CORE_CTL) += core_ctl.o
 obj-$(CONFIG_PSI) += psi.o
