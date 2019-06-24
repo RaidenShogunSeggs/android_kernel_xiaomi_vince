@@ -68,8 +68,8 @@ void *bpf_map_area_alloc(size_t size)
 			return area;
 	}
 
-	return __vmalloc(size, GFP_KERNEL | __GFP_HIGHMEM | flags,
-			 PAGE_KERNEL);
+	return __vmalloc_node_flags_caller(size,  GFP_KERNEL | flags,
+					   __builtin_return_address(0));
 }
 
 void bpf_map_area_free(void *area)
