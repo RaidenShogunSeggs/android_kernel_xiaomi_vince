@@ -4266,7 +4266,6 @@ static int assign_cfs_rq_runtime(struct cfs_rq *cfs_rq)
 	raw_spin_unlock(&cfs_b->lock);
 
 	cfs_rq->runtime_remaining += amount;
-
 	return cfs_rq->runtime_remaining > 0;
 }
 
@@ -4721,6 +4720,8 @@ static void do_sched_cfs_slack_timer(struct cfs_bandwidth *cfs_b)
 
 	raw_spin_lock_irqsave(&cfs_b->lock, flags);
 	lsub_positive(&cfs_b->runtime, runtime);
+
+	raw_spin_lock(&cfs_b->lock);
 	cfs_b->distribute_running = 0;
 	raw_spin_unlock(&cfs_b->lock);
 }
