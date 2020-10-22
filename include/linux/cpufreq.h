@@ -423,6 +423,9 @@ void cpufreq_freq_transition_end(struct cpufreq_policy *policy,
 void cpufreq_notify_utilization(struct cpufreq_policy *policy,
 		unsigned int load);
 
+void cpufreq_notify_utilization(struct cpufreq_policy *policy,
+		unsigned int load);
+
 #else /* CONFIG_CPU_FREQ */
 static inline int cpufreq_register_notifier(struct notifier_block *nb,
 						unsigned int list)
