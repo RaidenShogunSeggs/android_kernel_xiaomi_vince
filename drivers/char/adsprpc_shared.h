@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019, 2020 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -338,6 +339,7 @@ enum fastrpc_proc_attr {
 	FASTRPC_MODE_ADAPTIVE_QOS		= 1 << 4,
 	/* Macro for System Process */
 	FASTRPC_MODE_SYSTEM_PROCESS		= 1 << 5,
+
 };
 
 #endif

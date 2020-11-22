@@ -316,7 +316,9 @@ struct fastrpc_channel_ctx {
 	struct fastrpc_glink_info link;
 	/* Indicates, if channel is restricted to secure node only */
 	int secure;
+
 	struct fastrpc_dsp_capabilities dsp_cap_kernel;
+
 	/* Indicates whether the channel supports unsigned PD */
 	bool unsigned_support;
 };
