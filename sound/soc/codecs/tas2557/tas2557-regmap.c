@@ -537,7 +537,7 @@ static enum hrtimer_restart temperature_timer_func(struct hrtimer *timer)
 		schedule_work(&pTAS2557->mtimerwork);
 		if (gpio_is_valid(pTAS2557->mnGpioINT)) {
 			tas2557_enableIRQ(pTAS2557, false, false);
-			schedule_delayed_work(&pTAS2557->irq_work, msecs_to_jiffies(1));
+		queue_delayed_work(system_power_efficient_wq, &pTAS2557->irq_work, msecs_to_jiffies(1));
 		}
 	}
 	return HRTIMER_NORESTART;
