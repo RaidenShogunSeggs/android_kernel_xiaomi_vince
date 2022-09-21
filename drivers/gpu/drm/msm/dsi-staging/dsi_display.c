@@ -4722,6 +4722,181 @@ static int dsi_display_sysfs_deinit(struct dsi_display *display)
 
 }
 
+
+static char dcs_cmd_page[2] = {0x00, 0x00}; /* DTYPE_DCS_READ */
+static struct dsi_cmd_desc dcs_read_cmd_page = {
+		{0, 0x15, MIPI_DSI_MSG_REQ_ACK, 0, 5, sizeof(dcs_cmd_page), dcs_cmd_page, 0, 0},
+		1,
+		5,
+};
+
+static int dsi_display_write_reg_page(struct dsi_display_ctrl *ctrl, char cmd0,
+		char cmd1, char *rbuf, int len)
+{
+	int rc = 0;
+	struct dsi_cmd_desc *cmds;
+	u32 flags = 0;
+
+	if (!ctrl || !ctrl->ctrl)
+		return -EINVAL;
+
+	if (!dsi_ctrl_validate_host_state(ctrl->ctrl))
+		return 1;
+
+	dcs_cmd_page[0] = cmd0;
+	dcs_cmd_page[1] = cmd1;
+	cmds = &dcs_read_cmd_page;
+	flags |= (DSI_CTRL_CMD_FETCH_MEMORY);
+
+	memset(rbuf, 0x0, SZ_4K);
+	if (cmds->last_command) {
+		cmds->msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
+		flags |= DSI_CTRL_CMD_LAST_COMMAND;
+	}
+	cmds->msg.rx_buf = NULL;
+	cmds->msg.rx_len = 0;
+	rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, &cmds->msg, &flags);
+	if (rc < 0) {
+		DSI_ERR("rx cmd transfer failed rc=%d\n", rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+int lct_tp_lockdown_info_callback(void)
+{
+	bool is_already_read = false;
+	ssize_t rc = 0;
+	char *buf = NULL;
+	struct dsi_display *display;
+	struct dsi_display_ctrl *ctrl = NULL;
+
+	if (is_already_read)
+		return 0;
+
+	if (!display) {
+		DSI_ERR("Invalid display\n");
+		return -EINVAL;
+	}
+
+	if (display->tx_cmd_buf == NULL) {
+		rc = dsi_host_alloc_cmd_tx_buffer(display);
+		if (rc) {
+			DSI_ERR("failed to allocate cmd tx buffer memory\n");
+			goto done;
+		}
+	}
+
+	rc = dsi_display_cmd_engine_enable(display);
+	if (rc) {
+		DSI_ERR("cmd engine enable failed\n");
+		return -EPERM;
+	}
+
+	buf = kzalloc(PAGE_SIZE, GFP_KERNEL);
+	if (IS_ERR_OR_NULL(buf)) {
+		DSI_ERR("%s: kzalloc() request memory failed!\n", __func__);
+		return -ENOMEM;
+	}
+
+	ctrl = &display->ctrl[display->cmd_master_idx];
+	rc = dsi_display_write_reg_page(ctrl, 0xFF, 0x21, buf, sizeof(buf));
+	rc = dsi_display_read_reg(ctrl, 0xF1, 0x00, buf, sizeof(buf));
+	if (rc < 0) {
+		DSI_ERR("get lockdown failed rc=%d\n", rc);
+		goto exit;
+	}
+
+	rc = snprintf(buf, PAGE_SIZE, "%02X%02X%02X%02X%02X%02X%02X%02X\n",
+			buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
+
+	update_lct_tp_info(NULL, buf);
+	is_already_read = true;
+
+exit:
+	kfree(buf);
+	dsi_display_cmd_engine_disable(display);
+done:
+	return rc;
+}
+#endif
+
+int dsi_display_get_fps(struct dsi_display *display, u32 *fps)
+{
+	struct dsi_display_mode *cur_mode = NULL;
+	int ret = 0;
+
+	if (!display || !display->panel) {
+		DSI_ERR("Invalid display/panel ptr\n");
+		return -EINVAL;
+	}
+
+	mutex_lock(&display->display_lock);
+	cur_mode = display->panel->cur_mode;
+	if (cur_mode) {
+		*fps =  cur_mode->timing.refresh_rate;
+	} else {
+		ret = -EINVAL;
+	}
+	mutex_unlock(&display->display_lock);
+
+	return ret;
+}
+
+static ssize_t dynamic_fps_show(struct device *dev, struct device_attribute *attr,
+				 char *buf)
+{
+	struct dsi_display *display;
+	u32 fps = 0;
+	int rc = 0;
+
+	struct platform_device *pdev = to_platform_device(dev);
+	display = platform_get_drvdata(pdev);
+
+	if (!display) {
+		DSI_ERR("Invalid display\n");
+		return -EINVAL;
+	}
+
+	rc = dsi_display_get_fps(display, &fps);
+	if (rc) {
+		DSI_ERR("%s: failed to get fps. rc=%d\n", __func__, rc);
+		return snprintf(buf, PAGE_SIZE, "%s\n", "null");
+	}
+
+	return snprintf(buf, PAGE_SIZE, "%d\n", fps);
+}
+static DEVICE_ATTR_RO(dynamic_fps);
+
+static struct attribute *mi_display_attrs[] = {
+	&dev_attr_dynamic_fps.attr,
+	NULL,
+};
+ATTRIBUTE_GROUPS(mi_display);
+
+void dsi_mi_display_init(struct dsi_display *display) {
+	int disp_id = mi_get_disp_id(display);
+
+	if (IS_ERR_OR_NULL(display->class)) {
+		display->class = class_create(THIS_MODULE, "mi_display");
+		if (IS_ERR(display->class))
+			DSI_ERR("class_create failed, rc: %d\n", PTR_ERR(display->class));
+	}
+
+	if (IS_ERR_OR_NULL(display->dev)) {
+		display->dev = device_create_with_groups(display->class, &display->pdev->dev,
+				0, display, mi_display_groups, "disp-DSI-%d", disp_id);
+		if (IS_ERR(display->dev))
+			DSI_ERR("device_create_with_groups failed for disp-DSI-%d, ret: %d\n", disp_id, PTR_ERR(display->dev));
+	}
+}
+
+void dsi_mi_display_deinit(struct dsi_display *display) {
+	device_unregister(display->dev);
+	class_destroy(display->class);
+}
+
 /**
  * dsi_display_bind - bind dsi device with controlling device
  * @dev:        Pointer to base of platform device
@@ -4919,6 +5094,8 @@ static int dsi_display_bind(struct device *dev,
 	/* register te irq handler */
 	dsi_display_register_te_irq(display);
 
+	dsi_mi_display_init(display);
+
 	goto error;
 
 error_host_deinit:
@@ -4995,6 +5172,8 @@ static void dsi_display_unbind(struct device *dev,
 	atomic_set(&display->clkrate_change_pending, 0);
 	(void)dsi_display_sysfs_deinit(display);
 	(void)dsi_display_debugfs_deinit(display);
+
+	dsi_mi_display_deinit(display);
 
 	mutex_unlock(&display->display_lock);
 }
@@ -5946,6 +6125,46 @@ int dsi_display_set_mode(struct dsi_display *display,
 			goto error;
 		}
 	}
+
+
+	/*For dynamic DSI setting, use specified clock rate */
+	if (display->cached_clk_rate > 0)
+		adj_mode.priv_info->clk_rate_hz = display->cached_clk_rate;
+
+	rc = dsi_display_validate_mode_set(display, &adj_mode, flags);
+	if (rc) {
+		DSI_ERR("[%s] mode cannot be set\n", display->name);
+		goto error;
+	}
+
+	rc = dsi_display_set_mode_sub(display, &adj_mode, flags);
+	if (rc) {
+		DSI_ERR("[%s] failed to set mode\n", display->name);
+		goto error;
+	}
+
+#ifdef CONFIG_TARGET_PROJECT_K7T
+	if (display->panel->panel_initialized && (adj_mode.timing.refresh_rate == 90)) {
+		dsi_set_backlight_control(display->panel, &adj_mode);
+	}
+#endif
+
+#ifdef CONFIG_TARGET_PROJECT_C3Q
+	if (display->panel->panel_initialized && (adj_mode.timing.refresh_rate > 60)) {
+		dsi_set_backlight_control(display->panel, &adj_mode);
+	}
+#endif
+
+	DSI_INFO("mdp_transfer_time_us=%d us\n",
+			adj_mode.priv_info->mdp_transfer_time_us);
+	DSI_INFO("hactive= %d,vactive= %d,fps=%d\n",
+			timing.h_active, timing.v_active,
+			timing.refresh_rate);
+
+	if (display->panel->cur_mode->timing.refresh_rate != timing.refresh_rate) {
+		sysfs_notify(&display->dev->kobj, NULL, "dynamic_fps");
+	}
+
 
 	memcpy(display->panel->cur_mode, &adj_mode, sizeof(adj_mode));
 error:
