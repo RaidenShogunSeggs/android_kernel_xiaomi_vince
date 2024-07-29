@@ -214,47 +214,8 @@ static unsigned int get_next_freq(struct smugov_policy *sg_policy,
 	struct smugov_tunables *tunables = sg_policy->tunables;
 	unsigned int freq = arch_scale_freq_invariant() ?
 				policy->cpuinfo.max_freq : policy->cur;
-	unsigned int silver_max_freq = 0, gold_max_freq = 0;
 
-	unsigned long load = 100 * util / max;
-
-	if(load < tunables->target_load1){
-		freq = (freq + (freq >> tunables->bit_shift1)) * util / max;
-	} else if (load >= tunables->target_load1 && load < tunables->target_load2){
-		freq = (freq + (freq >> tunables->bit_shift1_2)) * util / max;
-	} else {
-		freq = (freq - (freq >> tunables->bit_shift2)) * util / max;
-	}
-
-	switch(policy->cpu){
-	case 0:
-		if(state_suspended &&  silver_max_freq > 0 && silver_max_freq < freq) {
-			silver_max_freq = sg_policy->tunables->silver_suspend_max_freq;
-			return silver_max_freq;
-		}
-		break;
-	case 1:
-	case 2:
-	case 3:
-		if(state_suspended)
-			return policy->min;
-		break;
-		
-	case 4:
-		if(state_suspended && gold_max_freq > 0 && gold_max_freq < freq) {
-			gold_max_freq = sg_policy->tunables->gold_suspend_max_freq;
-			return gold_max_freq; 
-		}
-		break;
-	case 5:
-	case 6:
-	case 7:
-		if(state_suspended)
-			return policy->min;
-		break;
-	default:
-		BUG();
-	}
+        freq = (freq + (freq >> 2)) * util / max;
 
 	if (freq == sg_policy->cached_raw_freq && sg_policy->next_freq != UINT_MAX)
 		return sg_policy->next_freq;

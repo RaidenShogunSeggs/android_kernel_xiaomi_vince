@@ -214,47 +214,8 @@ static unsigned int get_next_freq(struct smugov_policy *sg_policy,
 	struct smugov_tunables *tunables = sg_policy->tunables;
 	unsigned int freq = arch_scale_freq_invariant() ?
 				policy->cpuinfo.max_freq : policy->cur;
-	unsigned int silver_max_freq = 0, gold_max_freq = 0;
 
-	unsigned long load = 100 * util / max;
-
-	if(load < tunables->target_load1){
-		freq = (freq + (freq >> tunables->bit_shift1)) * util / max;
-	} else if (load >= tunables->target_load1 && load < tunables->target_load2){
-		freq = (freq + (freq >> tunables->bit_shift1_2)) * util / max;
-	} else {
-		freq = (freq - (freq >> tunables->bit_shift2)) * util / max;
-	}
-
-	switch(policy->cpu){
-	case 0:
-		if(state_suspended &&  silver_max_freq > 0 && silver_max_freq < freq) {
-			silver_max_freq = sg_policy->tunables->silver_suspend_max_freq;
-			return silver_max_freq;
-		}
-		break;
-	case 1:
-	case 2:
-	case 3:
-		if(state_suspended)
-			return policy->min;
-		break;
-		
-	case 4:
-		if(state_suspended && gold_max_freq > 0 && gold_max_freq < freq) {
-			gold_max_freq = sg_policy->tunables->gold_suspend_max_freq;
-			return gold_max_freq; 
-		}
-		break;
-	case 5:
-	case 6:
-	case 7:
-		if(state_suspended)
-			return policy->min;
-		break;
-	default:
-		BUG();
-	}
+        freq = (freq + (freq >> 2)) * util / max;
 
 	if (freq == sg_policy->cached_raw_freq && sg_policy->next_freq != UINT_MAX)
 		return sg_policy->next_freq;
@@ -449,7 +410,7 @@ static bool smugov_cpu_is_busy(struct smugov_cpu *sg_cpu)
 static inline bool smugov_cpu_is_busy(struct smugov_cpu *sg_cpu) { return false; }
 #endif /* CONFIG_NO_HZ_COMMON */
 
-static void smugov_update_single(struct update_util_data *hook, u64 time,
+static void sugov_update_single(struct update_util_data *hook, u64 time,
 				unsigned int flags)
 {
 	struct smugov_cpu *sg_cpu = container_of(hook, struct smugov_cpu, update_util);
@@ -575,7 +536,7 @@ static unsigned int smugov_next_freq_shared(struct smugov_cpu *sg_cpu, u64 time)
 	return get_next_freq(sg_policy, util, max);
 }
 
-static void smugov_update_shared(struct update_util_data *hook, u64 time,
+static void sugov_update_shared(struct update_util_data *hook, u64 time,
 				unsigned int flags)
 {
 	struct smugov_cpu *sg_cpu = container_of(hook, struct smugov_cpu, update_util);
@@ -1373,8 +1334,8 @@ static int smugov_start(struct cpufreq_policy *policy)
 
 		cpufreq_add_update_util_hook(cpu, &sg_cpu->update_util,
 					     policy_is_shared(policy) ?
-							smugov_update_shared :
-							smugov_update_single);
+							sugov_update_shared :
+							sugov_update_single);
 	}
 	return 0;
 }
