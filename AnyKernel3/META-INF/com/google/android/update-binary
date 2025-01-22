@@ -478,16 +478,6 @@ if [ -f version ]; then
   ui_printfile version;
   ui_print " ";
 fi;
-ui_print "==========================================";
-ui_print "|           Based On NekoLite            |";
-ui_print "==========================================";
-ui_print "|  Kernel         : AL-Kernel            |";
-ui_print "|  Linux Version  : 4.9.391              |";
-ui_print "|  Device         : Redmi 5 Plus Vince   |";
-ui_print "|  Maintainer     : AL                   |";
-ui_print "|========================================|";
-ui_print "| AnyKernel3 by osm0sis @xda-developers. |";
-ui_print "==========================================";
 
 setup_env;
 
@@ -513,7 +503,3 @@ if [ "$(file_getprop anykernel.sh do.cleanup)" == 1 ]; then
   ui_print " - Cleaning up...";
   cleanup;
 fi;
-
-ui_print "|===========================================|";
-ui_print "|     AL Kernel Installed Successfully.     |";
-ui_print "=============================================";

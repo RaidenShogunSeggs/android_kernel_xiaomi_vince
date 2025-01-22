@@ -27,7 +27,7 @@
 	interrupt-parent = <&wakegic>;
 
 	chosen {
-		bootargs = "core_ctl_disable_cpumask=0-7 kpti=0 noirqdebug";
+		bootargs = "quiet core_ctl_disable_cpumask=0-7 kpti=0 androidboot.flash.locked=1 androidboot.verifiedbootstate=green androidboot.veritymode=enforcing androidboot.vbmeta.device_state=locked noirqdebug nodebugmon";
 	};
 
 	vendor: vendor {

@@ -24,7 +24,7 @@ export TZ=Asia/Jakarta
 #export KBUILD_BUILD_VERSION=1
 #export KBUILD_BUILD_TIMESTAMP="Thu Jan 1 07:00:00 WIB 2023"
 #export KBUILD_BUILD_HOST=Fontaine-Machine-Industry-Host
-export KERNELDIR="/crave-devspaces/kt"
+export KERNELDIR="/workspace/File_Rom/kt"
 export KERNELNAME="Castorice"
 export SRCDIR="${KERNELDIR}"
 export OUTDIR="${KERNELDIR}/out"
@@ -34,8 +34,8 @@ export ZIP_DIR="${KERNELDIR}/files"
 export IMAGE="${OUTDIR}/arch/arm64/boot/Image.gz-dtb"
 export ZIPNAME="${KERNELNAME}-Kernel-vince-$(date +%m%d-%H%M%S)-OC.zip"
 export FINAL_ZIP="${ZIP_DIR}/${ZIPNAME}"
-#export TC_DIR="/crave-devspaces/azure-clang"
-#export PATH="$TC_DIR/bin:$PATH"
+export TC_DIR="/workspace/File_Rom/azure-clang"
+export PATH="$TC_DIR/bin:$PATH"
 
 if [[ $1 = "-r" || $1 = "--regen" ]]; then
 make O=out ARCH=arm64 $DEFCONFIG savedefconfig
@@ -49,8 +49,8 @@ fi
 
 mkdir -p out
 make O=out ARCH=arm64 $DEFCONFIG
-#make -j$(nproc --all) O=out ARCH=arm64 CC=clang HOSTCC=clang HOSTCXX=clang++ READELF=llvm-readelf HOSTAR=llvm-ar AR=llvm-ar AS=llvm-as NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-  2>&1 | tee log.txt
-make -j4 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-  
+make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld HOSTCC=clang HOSTCXX=clang++ READELF=llvm-readelf HOSTAR=llvm-ar AR=llvm-ar AS=llvm-as NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-  2>&1 | tee log.txt
+#make -j4 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-  
     echo -e "==========================="
     echo -e "   COMPILE KERNEL COMPLETE "
     echo -e "==========================="
