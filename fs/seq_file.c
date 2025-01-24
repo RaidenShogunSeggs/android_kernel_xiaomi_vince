@@ -41,8 +41,8 @@ static void *seq_buf_alloc(unsigned long size)
 		gfp |= __GFP_NORETRY | __GFP_NOWARN;
 	buf = kmalloc(size, gfp);
 	if (!buf && size > PAGE_SIZE)
-		buf = vmalloc(size)
-	return kvmalloc(size, GFP_KERNEL);
+		buf = vmalloc(size);
+	return buf;
 }
 
 /**
