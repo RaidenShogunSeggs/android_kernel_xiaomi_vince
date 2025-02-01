@@ -4011,9 +4011,8 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 		goto failed_mount2;
 	}
 
-	sbi->s_gdb_count = db_count;
-
-	setup_timer(&sbi->s_err_report, print_daily_error_info, 0);
+	setup_timer(&sbi->s_err_report, print_daily_error_info,
+		(unsigned long) sb);
 
 	/* Register extent status tree shrinker */
 	if (ext4_es_register_shrinker(sbi))
