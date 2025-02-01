@@ -14,7 +14,7 @@
 #include <linux/delay.h>
 #include <linux/freezer.h>
 #include <linux/pm_wakeup.h>
-#include <linux/fb.h>
+#include <linux/msm_drm_notify.h>
 #include <linux/power_supply.h>
 
 #include "f2fs.h"
@@ -298,25 +298,32 @@ static void rapid_gc_fb_work(struct work_struct *work)
 	}
 }
 
-static int fb_notifier_callback(struct notifier_block *self,
+static int msm_drm_notifier_callback(struct notifier_block *self,
 				unsigned long event, void *data)
 {
-	struct fb_event *evdata = data;
+	struct msm_drm_notifier *evdata = data;
 	int *blank;
 
-	if ((event == FB_EVENT_BLANK) && evdata && evdata->data) {
-		blank = evdata->data;
+	if (event != MSM_DRM_EVENT_BLANK)
+		goto out;
 
-		switch (*blank) {
-		case FB_BLANK_POWERDOWN:
-			screen_on = false;
-			queue_work(system_power_efficient_wq, &rapid_gc_fb_worker);
-			break;
-		case FB_BLANK_UNBLANK:
-			screen_on = true;
-			queue_work(system_power_efficient_wq, &rapid_gc_fb_worker);
-			break;
-		}
+	if (!evdata || !evdata->data || evdata->id != MSM_DRM_PRIMARY_DISPLAY)
+		goto out;
+
+	blank = evdata->data;
+	switch (*blank) {
+	case MSM_DRM_BLANK_POWERDOWN:
+		if (!screen_on)
+			goto out;
+		screen_on = false;
+		queue_work(system_power_efficient_wq, &rapid_gc_fb_worker);
+		break;
+	case MSM_DRM_BLANK_UNBLANK:
+		if (screen_on)
+			goto out;
+		screen_on = true;
+		queue_work(system_power_efficient_wq, &rapid_gc_fb_worker);
+		break;
 	}
 
 out:
@@ -324,19 +331,19 @@ out:
 }
 
 static struct notifier_block fb_notifier_block = {
-	.notifier_call = fb_notifier_callback,
+	.notifier_call = msm_drm_notifier_callback,
 };
 
 void __init f2fs_init_rapid_gc(void)
 {
 	INIT_WORK(&rapid_gc_fb_worker, rapid_gc_fb_work);
 	wakeup_source_init(&gc_wakelock, "f2fs_rapid_gc_wakelock");
-	fb_register_client(&fb_notifier_block);
+	msm_drm_register_client(&fb_notifier_block);
 }
 
 void __exit f2fs_destroy_rapid_gc(void)
 {
-	fb_unregister_client(&fb_notifier_block);
+	msm_drm_unregister_client(&fb_notifier_block);
 	wakeup_source_trash(&gc_wakelock);
 }
 
