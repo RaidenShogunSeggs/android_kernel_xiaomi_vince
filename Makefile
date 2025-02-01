@@ -1,6 +1,6 @@
 VERSION = 4
 PATCHLEVEL = 9
-SUBLEVEL = 392
+SUBLEVEL = 393
 EXTRAVERSION =
 NAME = Roaring Lionus
 
@@ -782,8 +782,10 @@ endif
 # Future support for zero initialization is still being debated, see
 # https://bugs.llvm.org/show_bug.cgi?id=45497. These flags are subject to being
 # renamed or dropped.
-KBUILD_CFLAGS  += -ftrivial-auto-var-init=zero
-KBUILD_CFLAGS  += $(call cc-option, -enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang)
+KBUILD_CFLAGS   += -ftrivial-auto-var-init=zero 
+ifneq ($(call clang-ifversion, -ge, 1700, y), y)
+KBUILD_CFLAGS   += -enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang
+endif
 
 ifdef CONFIG_CC_WERROR
 KBUILD_CFLAGS	+= -Werror
