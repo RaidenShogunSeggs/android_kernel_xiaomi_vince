@@ -68,10 +68,10 @@
 		qcom,id = <0>;
 		qcom,chipid = <0x05000600>;
 
-		qcom,initial-pwrlevel = <7>;
+		qcom,initial-pwrlevel = <8>;
 		tzone-names = "gpu0-usr", "gpu1-usr";
 
-		qcom,idle-timeout = <80>; //msecs
+		qcom,idle-timeout = <64>; //msecs
 		qcom,deep-nap-timeout = <100>; //msecs
 		qcom,strtstp-sleepwake;
 
@@ -116,10 +116,6 @@
 		vddcx-supply = <&gdsc_oxili_cx>;
 		vdd-supply = <&gdsc_oxili_gx>;
 
-		/* CPU latency parameter */
-		qcom,pm-qos-active-latency = <213>;
-		qcom,pm-qos-wakeup-latency = <213>;
-
 		/* Quirks */
 		qcom,gpu-quirk-two-pass-use-wfi;
 		qcom,gpu-quirk-dp2clockgating-disable;
@@ -127,9 +123,6 @@
 
 		/* Enable context aware freq. scaling */
 		qcom,enable-ca-jump;
-
-		/* To disable GPU wake up on touch event */
-		qcom,disable-wake-on-touch;
 
 		/* Context aware jump busy penalty in us */
 		qcom,ca-busy-penalty = <12000>;
