@@ -19,11 +19,11 @@ done
 [[ -z ${ZIP} ]] && { echo "${bold}LOADING-_-....${normal}"; }
 
 DEFCONFIG="vince_defconfig"
-#export KBUILD_BUILD_USER=Furina×Chiori
+export KBUILD_BUILD_USER=Rasyid
 export TZ=Asia/Jakarta
 #export KBUILD_BUILD_VERSION=1
 #export KBUILD_BUILD_TIMESTAMP="Thu Jan 1 07:00:00 WIB 2023"
-#export KBUILD_BUILD_HOST=Fontaine-Machine-Industry-Host
+export KBUILD_BUILD_HOST=Theater
 export KERNELDIR="/workspace/File_Rom/kt"
 export KERNELNAME="Castorice"
 export SRCDIR="${KERNELDIR}"
