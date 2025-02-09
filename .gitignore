@@ -128,7 +128,3 @@ Android.bp
 out/
 *.zip
 AnyKernel3
-
-# Ignore KernelSU folders
-KernelSU-Next/
-drivers/kernelsu
